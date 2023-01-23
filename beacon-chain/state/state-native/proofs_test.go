@@ -133,6 +133,13 @@ func TestBeaconStateMerkleProofs_bellatrix(t *testing.T) {
 		valid := trie.VerifyMerkleProof(htr[:], finalizedRoot, gIndex, proof)
 		require.Equal(t, true, valid)
 	})
+	t.Run("block roots", func(t *testing.T) {
+		leaf, proof, err := bellatrix.BlockRootProof(ctx)
+		require.NoError(t, err)
+		gIndex := statenative.BlockRootsGeneralizedIndex()
+		valid := trie.VerifyMerkleProof(htr[:], leaf[:], gIndex, proof)
+		require.Equal(t, true, valid)
+	})
 	t.Run("recomputes root on dirty fields", func(t *testing.T) {
 		currentRoot, err := bellatrix.HashTreeRoot(ctx)
 		require.NoError(t, err)

@@ -12,11 +12,17 @@ import (
 
 const (
 	finalizedRootIndex = uint64(105) // Precomputed value.
+	blockRootsIndex    = uint64(37)  // Precomputed value.
 )
 
 // FinalizedRootGeneralizedIndex for the beacon state.
 func FinalizedRootGeneralizedIndex() uint64 {
 	return finalizedRootIndex
+}
+
+// BlockRootsGeneralizedIndex for the beacon state.
+func BlockRootsGeneralizedIndex() uint64 {
+	return blockRootsIndex
 }
 
 // CurrentSyncCommitteeGeneralizedIndex for the beacon state.
@@ -105,4 +111,27 @@ func (b *BeaconState) FinalizedRootProof(ctx context.Context) ([][]byte, error) 
 	branch := fieldtrie.ProofFromMerkleLayers(b.merkleLayers, nativetypes.FinalizedCheckpoint.RealPosition())
 	proof = append(proof, branch...)
 	return proof, nil
+}
+
+func (b *BeaconState) BlockRootProof(ctx context.Context) ([32]byte, [][]byte, error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	if err := b.initializeMerkleLayers(ctx); err != nil {
+		return [32]byte{}, nil, err
+	}
+	if err := b.recomputeDirtyFields(ctx); err != nil {
+		return [32]byte{}, nil, err
+	}
+
+	proof := make([][]byte, 0)
+	generalizedIndex := nativetypes.BlockRoots.RealPosition()
+	branch := fieldtrie.ProofFromMerkleLayers(b.merkleLayers, generalizedIndex)
+	proof = append(proof, branch...)
+
+	leaf, err := b.blockRoots.HashTreeRoot()
+	if err != nil {
+		return [32]byte{}, nil, err
+	}
+	return leaf, proof, nil
 }
