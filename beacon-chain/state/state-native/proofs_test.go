@@ -2,6 +2,7 @@ package state_native_test
 
 import (
 	"context"
+	"github.com/prysmaticlabs/prysm/v3/beacon-chain/state/stateutil"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -134,7 +135,8 @@ func TestBeaconStateMerkleProofs_bellatrix(t *testing.T) {
 		require.Equal(t, true, valid)
 	})
 	t.Run("block roots", func(t *testing.T) {
-		leaf, proof, err := bellatrix.BlockRootProof(ctx)
+		leaf, err := stateutil.ArraysRoot(bellatrix.BlockRoots(), uint64(len(bellatrix.BlockRoots())))
+		proof, err := bellatrix.BlockRootProof(ctx)
 		require.NoError(t, err)
 		gIndex := statenative.BlockRootsGeneralizedIndex()
 		valid := trie.VerifyMerkleProof(htr[:], leaf[:], gIndex, proof)
